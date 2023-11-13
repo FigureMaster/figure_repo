@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.study.figure.dto.Notice;
@@ -19,6 +20,7 @@ import com.study.figure.dto.Project;
 import com.study.figure.dto.User;
 import com.study.figure.service.NoticeService;
 import com.study.figure.service.ProjectService;
+import com.study.figure.service.TokenProvider;
 import com.study.figure.service.UserService;
 
 @RestController
@@ -33,6 +35,9 @@ public class UserController {
     
     @Autowired
     private NoticeService noticeService;
+
+	@Autowired
+	private TokenProvider tokenProvider;
 
     @PostMapping("/signUp")
 	public ResponseEntity<User> signUp(@RequestBody Map<String, Object> saveData) throws Exception {
@@ -75,12 +80,13 @@ public class UserController {
 		return rs;
 	}
 
-	@GetMapping("/{userId}/projects")
-	public ResponseEntity<List<Project>> getUserProjects(@PathVariable Long userId) throws Exception {
+	@GetMapping("/projects")
+	public ResponseEntity<List<Project>> getUserProjects(@RequestParam(value = "userId", required = true) String token) throws Exception {
 		ResponseEntity<List<Project>> rs = null;
 
 		try {
-			List<Project> result = projectService.getUserProjects(userId);
+			String userId = tokenProvider.getUserId(token);
+			List<Project> result = projectService.getUserProjects(Long.valueOf(userId));
 			rs = new ResponseEntity<List<Project>>(result, HttpStatus.OK);
 		} catch (Exception e) {
 			e.printStackTrace();
