@@ -8,7 +8,14 @@
 
 	<select id="getUserProjects" parameterType="Long" resultType="com.study.figure.dto.Project" >
 		SELECT
-			*
+			p.project_id as "projectId",
+			p.name as "name",
+			p.j_desc as "description",
+			p.status as "status",
+			p.create_user_id as "createUserId",
+			p.create_date_time as "createDateTime",
+			p.update_user_id as "updateUserId",
+			p.update_date_time as "updateDateTime"
 		FROM
 			project p
 		INNER JOIN

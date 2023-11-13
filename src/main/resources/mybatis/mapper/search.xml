@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.study.figure.mybatis.SearchMapper">
+
+	<resultMap id="integratedSearchResult" type="Map">
+		<result property="searchKeyword" column="searchKeyword" />
+		<collection property="users" column="{loginUserId=loginUserId, searchKeyword=searchKeyword}" select="searchUser" />
+		<collection property="projects" column="{loginUserId=loginUserId, searchKeyword=searchKeyword}" select="searchProject" />
+		<collection property="works" column="{loginUserId=loginUserId, searchKeyword=searchKeyword}" select="searchWork" />
+	</resultMap>
+
+	<resultMap id="userSearchResult" type="Map">
+		<result property="searchKeyword" column="searchKeyword" />
+		<collection property="projects" column="{userId=userId, loginUserId=loginUserId}" select="searchProject" />
+		<collection property="works" column="{userId=userId, loginUserId=loginUserId}" select="searchWork" />
+	</resultMap>
+
+	<select id="integratedSearch" parameterType="Map" resultMap="integratedSearchResult">
+		select #{searchKeyword} as "searchKeyword", #{userId} as "loginUserId"
+	</select>
+
+	<select id="userSearch" parameterType="Map" resultMap="userSearchResult">
+		select #{userId} as "userId", #{loginUserId} as "loginUserId"
+	</select>
+
+	<select id="searchUser" parameterType="Map" resultType="com.study.figure.dto.User">
+		SELECT
+			u.user_id as "userId", 
+			u.email, 
+			u.password, 
+			u.j_desc as "desc", 
+			u.name, 
+			u.status, 
+			u.salt,
+			u.create_date_time as "createDateTime", 
+			u.update_date_time as "updateDateTime"
+		FROM
+			users u
+		INNER JOIN
+			user_project_mapping m
+		ON
+			u.user_id = m.user_id
+		LEFT JOIN
+			user_project_mapping m2
+		ON
+			m2.project_id = m.project_id
+		WHERE
+			m2.user_id = #{loginUserId}::INTEGER
+			<if test="searchKeyword != null">
+				AND u.name like CONCAT('%', #{searchKeyword}, '%')
+			</if>
+	</select>
+
+	<select id="searchProject" parameterType="Map" resultType="com.study.figure.dto.Project">
+		SELECT
+			p.project_id as "projectId",
+			p.name as "name",
+			p.j_desc as "description",
+			p.status as "status",
+			p.create_user_id as "createUserId",
+			p.create_date_time as "createDateTime",
+			p.update_user_id as "updateUserId",
+			p.update_date_time as "updateDateTime"
+		FROM
+			project p
+		INNER JOIN
+			user_project_mapping m
+		ON
+			p.project_id = m.project_id
+		<if test="userId != null">
+			INNER JOIN
+				user_project_mapping m2
+			ON
+				m.project_id = m2.project_id
+				AND m2.user_id = #{userId}
+		</if>
+		WHERE
+			m.user_id = #{loginUserId}::INTEGER
+			<if test="searchKeyword != null">
+				AND p.name like CONCAT('%', #{searchKeyword}, '%')
+			</if>
+	</select>
+
+	<select id="searchWork" parameterType="Map" resultType="com.study.figure.dto.Work">
+		SELECT
+			w.work_id as "workId",
+			w.name as "name",
+			w.j_desc as "jDesc",
+			w.status as "status",
+			w.start_date_time as "startDateTime",
+			w.end_date_time as "endDateTime",
+			w.create_user_id as "createUserId",
+			w.create_date_time as "createDateTime",
+			w.update_user_id as "updateUserId",
+			w.update_date_time as "updateDateTime"
+		FROM
+			work w
+		INNER JOIN
+			user_project_mapping m
+		ON
+			w.project_id = m.project_id
+		<if test="userId != null">
+			INNER JOIN
+				user_project_mapping m2
+			ON
+				m.project_id = m2.project_id
+				AND m2.user_id = #{userId}
+		</if>
+		WHERE
+			m.user_id = #{loginUserId}::INTEGER
+			<if test="searchKeyword != null">
+				AND name like CONCAT('%', #{searchKeyword}, '%')
+			</if>
+	</select>
+</mapper>
